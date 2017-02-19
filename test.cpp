@@ -9,7 +9,7 @@ using namespace std;
 #define N_BUFFER        1000
 #define N_DATA          100000
 #define N_PRODUCER      20
-#defint N_CONSUMER      30
+#define N_CONSUMER      30
 
 void *add_item();
 void *remove_item();
