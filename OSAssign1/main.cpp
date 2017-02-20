@@ -26,8 +26,14 @@ void consume(int buf[],int *head_ptr,int *tail_ptr);
 bool isTimeout(int time);
 
 int main (int argc, char* argv[]) {
+    cout<<"Producers "<<atoi(argv[1]);
+    cout<<" ,Consumers "<<atoi(argv[2])<<endl;
+    cout<<"Buffer size "<<atoi(argv[3])<<endl;
+    cout<<"Requests "<<atoi(argv[4])<<endl<<endl;
+
     buf_size = atoi(argv[3]);
-    data_count = atoi(argv[4]);
+    int data_size = atoi(argv[4]);
+    data_count = data_size;
     int *buf = new int[buf_size];
     int buf_head = 0;
     int buf_tail = 0;
@@ -51,10 +57,16 @@ int main (int argc, char* argv[]) {
     }
     finishTime = clock();
 
-    cout << "Request " << req << " Times" << endl;
-    cout << "Append " << append_count << " Times" << endl;
-    cout << "Consume " << consume_count << " Times" << endl;
-    cout << "Time use " << finishTime-startTime << " ms" << endl;
+    double reqrate = ((double)req/(double)data_size)*100;
+    double Elapsed_Time = (finishTime-startTime)/1000.0;
+    double Throughput = req/Elapsed_Time;
+
+    printf("Successfully consumed %d requests (%.2f\%)\n", req, reqrate);
+    printf("Elapsed Time: %.3f s\n", Elapsed_Time);
+    printf("Throughput: %.2f successful requests/s\n", Throughput);
+    //cout << "Append " << append_count << " Times" << endl;
+    //cout << "Consume " << consume_count << " Times" << endl;
+
 }
 
 void add_item(int buf[], int *tail_ptr){
