@@ -1,21 +1,20 @@
 #include <thread>
-#include <stdio.h>
 #include <conio.h>
 #include <mutex>
 #include <iostream>
+#include <time.h>
+
 using namespace std;
 
 
-#define NUM_THREADS     5
-#define N_BUFFER        20
-#define N_DATA          100000
+#define N_BUFFER        1000
 #define N_PRODUCER      20
 #define N_CONSUMER      30
 
 std::mutex m;
 int append_count=0;
 int consume_count=0;
-int data_count=1000;
+int data_count=100000;
 int req=0;
 
 void add_item(int buf[], int *tail_ptr);
@@ -24,19 +23,20 @@ bool isEmpty(int buf[], int head, int tail);
 bool isFull(int buf[], int head, int tail);
 void append(int buf[],int *head_ptr,int *tail_ptr);
 void consume(int buf[],int *head_ptr,int *tail_ptr);
+bool isTimeout(int time);
 
 int main () {
     int buf[N_BUFFER] = {0};
     int buf_head = 0;
     int buf_tail = 0;
-    std::thread producer[20];
-    std::thread consumer[30];
+    thread producer[20];
+    thread consumer[30];
 
     for(int i= 0;i<20;i++){
-        producer[i] = std::thread(append, buf, &buf_head, &buf_tail);
+        producer[i] = thread(append, buf, &buf_head, &buf_tail);
     }
     for(int i= 0;i<30;i++){
-        consumer[i] = std::thread(consume, buf, &buf_head, &buf_tail);
+        consumer[i] = thread(consume, buf, &buf_head, &buf_tail);
     }
     for(int i=0 ;i<20;i++){
         producer[i].join();
@@ -44,8 +44,6 @@ int main () {
     for(int i=0 ;i<30;i++){
         consumer[i].join();
     }
-    for(int i = 0;i<N_BUFFER;i++)
-        printf("%d ",buf[i]);
 
     cout << endl;
     cout << "Request " << req << " Times" << endl;
@@ -63,7 +61,8 @@ void add_item(int buf[], int *tail_ptr){
 void remove_item(int buf[], int *head_ptr){
     buf[*head_ptr] = 0;
     (*head_ptr)++;
-    *head_ptr %= N_BUFFER;
+    if(*head_ptr >= N_BUFFER)
+        *head_ptr -= N_BUFFER;
 }
 
 bool isEmpty(int buf[], int head, int tail){
@@ -80,6 +79,7 @@ bool isFull(int buf[], int head, int tail){
 }
 
 void append(int buf[],int *head_ptr,int *tail_ptr){
+    int timer=0;
     while(1){
         m.lock();
         if(data_count>0){
@@ -88,6 +88,14 @@ void append(int buf[],int *head_ptr,int *tail_ptr){
                 append_count++;
                 data_count--;
                 req++;
+            }else{
+                if(timer!=0){//Timer is Running
+                    if(isTimeout(timer)){
+                        data_count--;
+                        timer = 0;
+                    }
+                }else
+                    timer = clock();
             }
         }else{
             m.unlock();
@@ -97,6 +105,7 @@ void append(int buf[],int *head_ptr,int *tail_ptr){
     }
 }
 void consume(int buf[],int *head_ptr,int *tail_ptr){
+    int timer;
     while(1){
         m.lock();
         if(data_count>0){
@@ -105,6 +114,14 @@ void consume(int buf[],int *head_ptr,int *tail_ptr){
                 consume_count++;
                 data_count--;
                 req++;
+            }else{
+                if(timer!=0){//Timer is Running
+                    if(isTimeout(timer)){
+                        data_count--;
+                        timer = 0;
+                    }
+                }else
+                    timer = clock();
             }
         }else{
             m.unlock();
@@ -113,3 +130,13 @@ void consume(int buf[],int *head_ptr,int *tail_ptr){
         m.unlock();
     }
 }
+
+bool isTimeout(int time){
+    int thisTime = clock();
+    if(thisTime-time>=10)
+        return true;
+    else
+        return false;
+
+}
+
