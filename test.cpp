@@ -26,27 +26,29 @@ void consume(int buf[],int *head_ptr,int *tail_ptr);
 bool isTimeout(int time);
 
 int main () {
+    int prod = 20;
+    int consm = 30;
     buf_size = 1000;
     data_count = 100000;
-    int buf[buf_size] = {0};
+    int *buf = new int[buf_size];
     int buf_head = 0;
     int buf_tail = 0;
     int startTime;
     int finishTime;
-    thread producer[20];
-    thread consumer[30];
+    thread producer[prod];
+    thread consumer[consm];
 
     startTime = clock();
-    for(int i= 0;i<20;i++){
+    for(int i= 0;i<prod;i++){
         producer[i] = thread(append, buf, &buf_head, &buf_tail);
     }
-    for(int i= 0;i<30;i++){
+    for(int i= 0;i<consm;i++){
         consumer[i] = thread(consume, buf, &buf_head, &buf_tail);
     }
-    for(int i=0 ;i<20;i++){
+    for(int i=0 ;i<prod;i++){
         producer[i].join();
     }
-    for(int i=0 ;i<30;i++){
+    for(int i=0 ;i<consm;i++){
         consumer[i].join();
     }
     finishTime = clock();
