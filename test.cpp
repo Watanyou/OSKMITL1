@@ -57,6 +57,7 @@ int main () {
     cout << "Append " << append_count << " Times" << endl;
     cout << "Consume " << consume_count << " Times" << endl;
     cout << "Time use " << finishTime-startTime << " ms" << endl;
+    delete(buf);
 }
 
 void add_item(int buf[], int *tail_ptr){
