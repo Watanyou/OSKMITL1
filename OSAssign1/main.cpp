@@ -37,16 +37,16 @@ int main (int argc, char* argv[]) {
     thread consumer[atoi(argv[2])];
 
     startTime = clock();
-    for(int i= 0;i<20;i++){
+    for(int i= 0;i<atoi(argv[1]);i++){
         producer[i] = thread(append, buf, &buf_head, &buf_tail);
     }
-    for(int i= 0;i<30;i++){
+    for(int i= 0;i<atoi(argv[2]);i++){
         consumer[i] = thread(consume, buf, &buf_head, &buf_tail);
     }
-    for(int i=0 ;i<20;i++){
+    for(int i=0 ;i<atoi(argv[1]);i++){
         producer[i].join();
     }
-    for(int i=0 ;i<30;i++){
+    for(int i=0 ;i<atoi(argv[2]);i++){
         consumer[i].join();
     }
     finishTime = clock();
