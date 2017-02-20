@@ -7,14 +7,14 @@
 using namespace std;
 
 
-#define N_BUFFER        1000
 #define N_PRODUCER      20
 #define N_CONSUMER      30
 
 std::mutex m;
 int append_count=0;
 int consume_count=0;
-int data_count=100000;
+int buf_size=0;
+int data_count=0;
 int req=0;
 
 void add_item(int buf[], int *tail_ptr);
@@ -26,12 +26,17 @@ void consume(int buf[],int *head_ptr,int *tail_ptr);
 bool isTimeout(int time);
 
 int main () {
-    int buf[N_BUFFER] = {0};
+    buf_size = 1000;
+    data_count = 100000;
+    int buf[buf_size] = {0};
     int buf_head = 0;
     int buf_tail = 0;
+    int startTime;
+    int finishTime;
     thread producer[20];
     thread consumer[30];
 
+    startTime = clock();
     for(int i= 0;i<20;i++){
         producer[i] = thread(append, buf, &buf_head, &buf_tail);
     }
@@ -44,25 +49,26 @@ int main () {
     for(int i=0 ;i<30;i++){
         consumer[i].join();
     }
+    finishTime = clock();
 
-    cout << endl;
     cout << "Request " << req << " Times" << endl;
     cout << "Append " << append_count << " Times" << endl;
     cout << "Consume " << consume_count << " Times" << endl;
+    cout << "Time use " << finishTime-startTime << " ms" << endl;
 }
 
 void add_item(int buf[], int *tail_ptr){
     buf[*tail_ptr] = 1;
     (*tail_ptr)++;
-    if(*tail_ptr >= N_BUFFER)
-        *tail_ptr -= N_BUFFER;
+    if(*tail_ptr >= buf_size)
+        *tail_ptr -= buf_size;
 }
 
 void remove_item(int buf[], int *head_ptr){
     buf[*head_ptr] = 0;
     (*head_ptr)++;
-    if(*head_ptr >= N_BUFFER)
-        *head_ptr -= N_BUFFER;
+    if(*head_ptr >= buf_size)
+        *head_ptr -= buf_size;
 }
 
 bool isEmpty(int buf[], int head, int tail){
