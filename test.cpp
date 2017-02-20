@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <conio.h>
 #include <mutex>
+#include <iostream>
+using namespace std;
 
 
 #define NUM_THREADS     5
@@ -14,6 +16,7 @@ std::mutex m;
 int append_count=0;
 int consume_count=0;
 int data_count=1000;
+int req=0;
 
 void add_item(int buf[], int *tail_ptr);
 void remove_item(int buf[], int *head_ptr);
@@ -26,23 +29,28 @@ int main () {
     int buf[N_BUFFER] = {0};
     int buf_head = 0;
     int buf_tail = 0;
-    std::thread producer[10];
-    std::thread consumer[10];
+    std::thread producer[20];
+    std::thread consumer[30];
 
-    printf("Start\n");
-    for(int i= 0;i<10;i++)
+    for(int i= 0;i<20;i++){
         producer[i] = std::thread(append, buf, &buf_head, &buf_tail);
-
-    for(int i=0 ;i<10;i++){
+    }
+    for(int i= 0;i<30;i++){
+        consumer[i] = std::thread(consume, buf, &buf_head, &buf_tail);
+    }
+    for(int i=0 ;i<20;i++){
         producer[i].join();
+    }
+    for(int i=0 ;i<30;i++){
+        consumer[i].join();
     }
     for(int i = 0;i<N_BUFFER;i++)
         printf("%d ",buf[i]);
 
-    printf("\n%d ",buf_head);
-    printf("\n%d ",buf_tail);
-    printf("\n%d ",append_count);
-    printf("\n%d ",consume_count);
+    cout << endl;
+    cout << "Request " << req << " Times" << endl;
+    cout << "Append " << append_count << " Times" << endl;
+    cout << "Consume " << consume_count << " Times" << endl;
 }
 
 void add_item(int buf[], int *tail_ptr){
@@ -72,19 +80,36 @@ bool isFull(int buf[], int head, int tail){
 }
 
 void append(int buf[],int *head_ptr,int *tail_ptr){
-    while(data_count>=0){
+    while(1){
         m.lock();
-        if(!isFull(buf, *head_ptr, *tail_ptr)){
-            add_item(buf,tail_ptr);
-            append_count++;
-            data_count--;
+        if(data_count>0){
+            if(!isFull(buf, *head_ptr, *tail_ptr)){
+                add_item(buf,tail_ptr);
+                append_count++;
+                data_count--;
+                req++;
+            }
+        }else{
+            m.unlock();
+            return;
         }
         m.unlock();
     }
 }
 void consume(int buf[],int *head_ptr,int *tail_ptr){
-    m.lock();
-    remove_item(buf,head_ptr);
-    m.unlock();
-    consume_count++;
+    while(1){
+        m.lock();
+        if(data_count>0){
+            if(!isEmpty(buf,*head_ptr, *tail_ptr)){
+                remove_item(buf,head_ptr);
+                consume_count++;
+                data_count--;
+                req++;
+            }
+        }else{
+            m.unlock();
+            return;
+        }
+        m.unlock();
+    }
 }
