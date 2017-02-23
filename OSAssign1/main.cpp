@@ -15,10 +15,10 @@ int buf_req=0;
 
 void add_item(bool buf[], int *tail_ptr);
 void remove_item(bool buf[], int *head_ptr);
-bool isEmpty(bool buf[], int head, int tail);
-bool isFull(bool buf[], int head, int tail);
 void append(bool buf[],int *head_ptr,int *tail_ptr);
+void append2(bool buf[],int *head_ptr,int *tail_ptr);
 void consume(bool buf[],int *head_ptr,int *tail_ptr);
+void consume2(bool buf[],int *head_ptr,int *tail_ptr);
 bool isTimeout(double time);
 
 int main (int argc, char* argv[]) {
@@ -98,12 +98,6 @@ void remove_item(bool buf[], int *head_ptr){
         *head_ptr -= buf_size;
 }
 
-bool isEmpty(bool buf[], int head, int tail){
-    return !buf[head];
-}
-bool isFull(bool buf[], int head, int tail){
-    return buf[tail];
-}
 
 void append(bool buf[],int *head_ptr,int *tail_ptr){
     double timer=0;
@@ -111,7 +105,7 @@ void append(bool buf[],int *head_ptr,int *tail_ptr){
         m.lock();
         if(in_req>0){
             //cout << id << " Append " << " Head " << *head_ptr << " Tail " << *tail_ptr << " Buf " << buf[*tail_ptr] << endl;
-            if(!isFull(buf, *head_ptr, *tail_ptr)){
+            if(!buf[*tail_ptr]){
                 timer = 0;
                 add_item(buf,tail_ptr);
                 in_req--;
@@ -133,12 +127,31 @@ void append(bool buf[],int *head_ptr,int *tail_ptr){
         m.unlock();
     }
 }
+
+void append2(bool buf[],int *head_ptr,int *tail_ptr){
+    double timer=0;
+    while(1){
+        m.lock();
+        while(!buf[*tail_ptr] && in_req > 0){
+            //cout << id << " Append " << " Head " << *head_ptr << " Tail " << *tail_ptr << " Buf " << buf[*tail_ptr] << " " << in_req << endl;
+            timer = 0;
+            add_item(buf,tail_ptr);
+            in_req--;
+        }
+        m.unlock();
+        if(in_req <= 0){
+            return;
+        }
+    }
+
+}
+
 void consume(bool buf[],int *head_ptr,int *tail_ptr){
     while(1){
         m.lock();
-        if(in_req > 0 || !isEmpty(buf,*head_ptr, *tail_ptr)){
+        if(in_req > 0 || buf[*head_ptr]){
             //cout << id << " Remove " << " Head " << *head_ptr << " Tail " << *tail_ptr << " Buf " << buf[*head_ptr] << endl;
-            if(!isEmpty(buf,*head_ptr, *tail_ptr)){
+            if(buf[*head_ptr]){
                 remove_item(buf,head_ptr);
                 out_req++;
             }
@@ -147,6 +160,21 @@ void consume(bool buf[],int *head_ptr,int *tail_ptr){
             return;
         }
         m.unlock();
+    }
+}
+
+void consume2(bool buf[],int *head_ptr,int *tail_ptr){
+    while(1){
+        m.lock();
+        while(in_req > 0 && buf[*head_ptr]){
+            //cout << id << " Remove " << " Head " << *head_ptr << " Tail " << *tail_ptr << " Buf " << buf[*head_ptr] << " " << in_req << endl;
+            remove_item(buf,head_ptr);
+            out_req++;
+        }
+        m.unlock();
+        if(in_req <= 0){
+            return;
+        }
     }
 }
 
