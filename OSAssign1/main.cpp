@@ -21,41 +21,53 @@ void append(int id, int buf[],int *head_ptr,int *tail_ptr);
 void consume(int id, int buf[],int *head_ptr,int *tail_ptr);
 bool isTimeout(double time);
 
-int main () {
-    cout<<"Producers "<<20;
-    cout<<" ,Consumers "<<30<<endl;
-    cout<<"Buffer size "<<1000<<endl;
-    cout<<"Requests "<<100000<<endl<<endl;
+int main (int argc, char* argv[]) {
+    if(argc != 5){
+        cout << "Wrong Argument" << endl;
+        return 1;
+    }
 
-    buf_size = 1000;
-    in_req = 100000;
+
+    int producer_size = 0, consumer_size = 0, req_size = 0;
+
+    sscanf(argv[1], "%d", &producer_size);
+    sscanf(argv[2], "%d", &consumer_size);
+    sscanf(argv[3], "%d", &buf_size);
+    sscanf(argv[4], "%d", &req_size);
+
+    cout<<"Producers "<<producer_size;
+    cout<<" ,Consumers "<<consumer_size<<endl;
+    cout<<"Buffer size "<<buf_size<<endl;
+    cout<<"Requests "<<req_size<<endl<<endl;
+
+    in_req = req_size;
     int *buf = new int[buf_size];
     int buf_head = 0;
     int buf_tail = 0;
-    thread producer[20];
-    thread consumer[30];
+    thread producer[producer_size];
+    thread consumer[consumer_size];
 
     for(int i = 0; i< buf_size; i++)
         buf[i] = 0;
 
     double startTime = clock();
 
-    for(int i= 0;i<20;i++){
+    for(int i= 0;i<producer_size;i++){
         producer[i] = thread(append, i, buf, &buf_head, &buf_tail);
     }
-    for(int i= 0;i<30;i++){
+    for(int i= 0;i<consumer_size;i++){
         consumer[i] = thread(consume, i, buf, &buf_head, &buf_tail);
     }
-    for(int i=0 ;i<20;i++){
+    for(int i=0 ;i<producer_size;i++){
         producer[i].join();
     }
-    for(int i=0 ;i<30;i++){
+    for(int i=0 ;i<consumer_size;i++){
         consumer[i].join();
     }
 
     double finishTime = clock();
 
-    double reqrate = ((double)out_req/(double)100000)*100;
+    double reqrate = ((double)out_req/(double)req_size)*100;
     double Elapsed_Time = (finishTime - startTime)/1000;
     double Throughput = out_req/Elapsed_Time;
 
