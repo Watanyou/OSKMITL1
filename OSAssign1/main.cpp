@@ -7,12 +7,7 @@
 using namespace std;
 
 
-#define N_PRODUCER      20
-#define N_CONSUMER      30
-
 std::mutex m;
-int append_count=0;
-int consume_count=0;
 int buf_size=0;
 int data_count=0;
 int req=0;
@@ -67,8 +62,6 @@ int main (int argc, char* argv[]) {
     printf("Successfully consumed %d requests (%.2f\%)\n", req, reqrate);
     printf("Elapsed Time: %.3f s\n", Elapsed_Time);
     printf("Throughput: %.2f successful requests/s\n", Throughput);
-    //cout << "Append " << append_count << " Times" << endl;
-    //cout << "Consume " << consume_count << " Times" << endl;
     delete(buf);
 
 }
@@ -109,7 +102,6 @@ void append(int buf[],int *head_ptr,int *tail_ptr){
             if(!isFull(buf, *head_ptr, *tail_ptr)){
                 timer = 0;
                 add_item(buf,tail_ptr);
-                append_count++;
                 data_count--;
                 req++;
             }else{
@@ -139,7 +131,6 @@ void consume(int buf[],int *head_ptr,int *tail_ptr){
             if(!isEmpty(buf,*head_ptr, *tail_ptr)){
                 timer = 0;
                 remove_item(buf,head_ptr);
-                consume_count++;
                 data_count--;
                 req++;
             }else{
