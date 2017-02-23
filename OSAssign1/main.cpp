@@ -2,23 +2,24 @@
 #include <conio.h>
 #include <mutex>
 #include <iostream>
-#include <time.h>
+#include <chrono>
 
 using namespace std;
 
 
 std::mutex m;
 int buf_size=0;
-int data_count=0;
-int req=0;
+int in_req=0;
+int out_req=0;
+int buf_req=0;
 
 void add_item(int buf[], int *tail_ptr);
 void remove_item(int buf[], int *head_ptr);
 bool isEmpty(int buf[], int head, int tail);
 bool isFull(int buf[], int head, int tail);
-void append(int buf[],int *head_ptr,int *tail_ptr);
-void consume(int buf[],int *head_ptr,int *tail_ptr);
-bool isTimeout(int time);
+void append(int id, int buf[],int *head_ptr,int *tail_ptr);
+void consume(int id, int buf[],int *head_ptr,int *tail_ptr);
+bool isTimeout(double time);
 
 int main (int argc, char* argv[]) {
     cout<<"Producers "<<atoi(argv[1]);
@@ -27,25 +28,23 @@ int main (int argc, char* argv[]) {
     cout<<"Requests "<<atoi(argv[4])<<endl<<endl;
 
     buf_size = atoi(argv[3]);
-    int data_size = atoi(argv[4]);
-    data_count = data_size;
+    in_req = atoi(argv[4]);
     int *buf = new int[buf_size];
     int buf_head = 0;
     int buf_tail = 0;
-    int startTime;
-    int finishTime;
     thread producer[atoi(argv[1])];
     thread consumer[atoi(argv[2])];
 
     for(int i = 0; i< buf_size; i++)
         buf[i] = 0;
 
-    startTime = clock();
+    auto startTime = std::chrono::high_resolution_clock::now();
+
     for(int i= 0;i<atoi(argv[1]);i++){
-        producer[i] = thread(append, buf, &buf_head, &buf_tail);
+        producer[i] = thread(append, i, buf, &buf_head, &buf_tail);
     }
     for(int i= 0;i<atoi(argv[2]);i++){
-        consumer[i] = thread(consume, buf, &buf_head, &buf_tail);
+        consumer[i] = thread(consume, i, buf, &buf_head, &buf_tail);
     }
     for(int i=0 ;i<atoi(argv[1]);i++){
         producer[i].join();
@@ -53,13 +52,14 @@ int main (int argc, char* argv[]) {
     for(int i=0 ;i<atoi(argv[2]);i++){
         consumer[i].join();
     }
-    finishTime = clock();
 
-    double reqrate = ((double)req/(double)data_size)*100;
-    double Elapsed_Time = (finishTime-startTime)/1000.0;
-    double Throughput = req/Elapsed_Time;
+    auto elapsed = std::chrono::high_resolution_clock::now() - startTime;
 
-    printf("Successfully consumed %d requests (%.2f\%)\n", req, reqrate);
+    double reqrate = ((double)out_req/(double)atoi(argv[4]))*100;
+    double Elapsed_Time = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+    double Throughput = out_req/(std::chrono::duration_cast<std::chrono::seconds>(elapsed).count());
+
+    printf("Successfully consumed %d requests (%.2f\%)\n", out_req, reqrate);
     printf("Elapsed Time: %.3f s\n", Elapsed_Time);
     printf("Throughput: %.2f successful requests/s\n", Throughput);
     delete(buf);
@@ -93,23 +93,22 @@ bool isFull(int buf[], int head, int tail){
         return false;
 }
 
-void append(int buf[],int *head_ptr,int *tail_ptr){
-    int timer=0;
+void append(int id, int buf[],int *head_ptr,int *tail_ptr){
+    double timer=0;
     while(1){
         m.lock();
-        if(data_count>0){
-            //cout << "Append " << "Head " << *head_ptr << "Tail " << *tail_ptr << "Buf " << buf[*tail_ptr] << endl;
+        if(in_req>0){
+            //cout << id << " Append " << " Head " << *head_ptr << " Tail " << *tail_ptr << " Buf " << buf[*tail_ptr] << endl;
             if(!isFull(buf, *head_ptr, *tail_ptr)){
                 timer = 0;
                 add_item(buf,tail_ptr);
-                data_count--;
-                req++;
+                in_req--;
             }else{
                 //cout << "Append Waiting " << timer << endl;
                 if(timer!=0){//Timer is Running
                     if(isTimeout(timer)){
                         //cout << "Time Out" << endl;
-                        data_count--;
+                        in_req--;
                         timer = 0;
                     }
                 }else
@@ -122,27 +121,14 @@ void append(int buf[],int *head_ptr,int *tail_ptr){
         m.unlock();
     }
 }
-void consume(int buf[],int *head_ptr,int *tail_ptr){
-    int timer;
+void consume(int id, int buf[],int *head_ptr,int *tail_ptr){
     while(1){
         m.lock();
-        if(data_count>0){
-            //cout << "Remove " << "Head " << *head_ptr << "Tail " << *tail_ptr << "Buf " << buf[*head_ptr] << endl;
+        if(in_req > 0 || !isEmpty(buf,*head_ptr, *tail_ptr)){
+            //cout << id << " Remove " << " Head " << *head_ptr << " Tail " << *tail_ptr << " Buf " << buf[*head_ptr] << endl;
             if(!isEmpty(buf,*head_ptr, *tail_ptr)){
-                timer = 0;
                 remove_item(buf,head_ptr);
-                data_count--;
-                req++;
-            }else{
-                //cout << "Remove Waiting " << timer << endl;
-                if(timer!=0){//Timer is Running
-                    if(isTimeout(timer)){
-                        //cout << "Time Out" << endl;
-                        data_count--;
-                        timer = 0;
-                    }
-                }else
-                    timer = clock();
+                out_req++;
             }
         }else{
             m.unlock();
@@ -152,12 +138,13 @@ void consume(int buf[],int *head_ptr,int *tail_ptr){
     }
 }
 
-bool isTimeout(int time){
-    int thisTime = clock();
-    if(thisTime-time>=10)
+bool isTimeout(double time){
+    double thisTime = clock();
+    if(thisTime-time>=1)
         return true;
     else
         return false;
 
 }
+
 
