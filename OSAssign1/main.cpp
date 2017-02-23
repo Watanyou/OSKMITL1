@@ -22,14 +22,14 @@ void consume(int id, int buf[],int *head_ptr,int *tail_ptr);
 bool isTimeout(double time);
 
 int main (int argc, char* argv[]) {
-    if(argc != 5){
-        cout << "Wrong Argument" << endl;
+    if(argc != 5){ /*Protect program from missing argument*/
+        cout << "Missing or More Argument input" << endl;
         return 1;
     }
 
+    int producer_size = 0, consumer_size = 0, req_size = 0; //Initiate size
 
-    int producer_size = 0, consumer_size = 0, req_size = 0;
-
+    /*Scan from argv and convert to integer*/
     sscanf(argv[1], "%d", &producer_size);
     sscanf(argv[2], "%d", &consumer_size);
     sscanf(argv[3], "%d", &buf_size);
