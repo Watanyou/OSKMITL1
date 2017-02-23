@@ -1,5 +1,16 @@
 # depslib dependency file v1.0
+<<<<<<< HEAD
 1487858654 source:d:\os\oskmitl1\osassign1\main.cpp
+=======
+1487840182 source:d:\users\watanyou\documents\oskmitl1\osassign1\main.cpp
+	<thread>
+	<conio.h>
+	<mutex>
+	<iostream>
+	<time.h>
+
+1487856716 source:d:\os\oskmitl1\osassign1\main.cpp
+>>>>>>> parent of e04dceb... อิอิ Fix
 	<thread>
 	<conio.h>
 	<mutex>
