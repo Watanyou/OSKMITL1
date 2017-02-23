@@ -73,8 +73,8 @@ int main (int argc, char* argv[]) {
 
     double finishTime = clock();
 
-    double reqrate = ((double)out_req/(double)req_size)*100;
-    double Elapsed_Time = (finishTime - startTime)/1000;
+    double reqrate = ((double)out_req/(double)req_size)*100.0;
+    double Elapsed_Time = (finishTime - startTime)/1000.0;
     double Throughput = out_req/Elapsed_Time;
 
     printf("Successfully consumed %d requests (%.2f\%)\n", out_req, reqrate);
@@ -166,7 +166,7 @@ void consume(bool buf[],int *head_ptr,int *tail_ptr){
 void consume2(bool buf[],int *head_ptr,int *tail_ptr){
     while(1){
         m.lock();
-        while(in_req > 0 && buf[*head_ptr]){
+        while(buf[*head_ptr]){
             //cout << id << " Remove " << " Head " << *head_ptr << " Tail " << *tail_ptr << " Buf " << buf[*head_ptr] << " " << in_req << endl;
             remove_item(buf,head_ptr);
             out_req++;
