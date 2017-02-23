@@ -42,6 +42,9 @@ int main (int argc, char* argv[]) {
     thread producer[atoi(argv[1])];
     thread consumer[atoi(argv[2])];
 
+    for(int i = 0; i< buf_size; i++)
+        buf[i] = 0;
+
     startTime = clock();
     for(int i= 0;i<atoi(argv[1]);i++){
         producer[i] = thread(append, buf, &buf_head, &buf_tail);
@@ -66,6 +69,7 @@ int main (int argc, char* argv[]) {
     printf("Throughput: %.2f successful requests/s\n", Throughput);
     //cout << "Append " << append_count << " Times" << endl;
     //cout << "Consume " << consume_count << " Times" << endl;
+    delete(buf);
 
 }
 
@@ -101,14 +105,18 @@ void append(int buf[],int *head_ptr,int *tail_ptr){
     while(1){
         m.lock();
         if(data_count>0){
+            //cout << "Append " << "Head " << *head_ptr << "Tail " << *tail_ptr << "Buf " << buf[*tail_ptr] << endl;
             if(!isFull(buf, *head_ptr, *tail_ptr)){
+                timer = 0;
                 add_item(buf,tail_ptr);
                 append_count++;
                 data_count--;
                 req++;
             }else{
+                //cout << "Append Waiting " << timer << endl;
                 if(timer!=0){//Timer is Running
                     if(isTimeout(timer)){
+                        //cout << "Time Out" << endl;
                         data_count--;
                         timer = 0;
                     }
@@ -127,14 +135,18 @@ void consume(int buf[],int *head_ptr,int *tail_ptr){
     while(1){
         m.lock();
         if(data_count>0){
+            //cout << "Remove " << "Head " << *head_ptr << "Tail " << *tail_ptr << "Buf " << buf[*head_ptr] << endl;
             if(!isEmpty(buf,*head_ptr, *tail_ptr)){
+                timer = 0;
                 remove_item(buf,head_ptr);
                 consume_count++;
                 data_count--;
                 req++;
             }else{
+                //cout << "Remove Waiting " << timer << endl;
                 if(timer!=0){//Timer is Running
                     if(isTimeout(timer)){
+                        //cout << "Time Out" << endl;
                         data_count--;
                         timer = 0;
                     }
