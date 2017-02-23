@@ -104,7 +104,7 @@ void append(bool buf[],int *head_ptr,int *tail_ptr){
     while(1){
         m.lock();
         if(in_req>0){
-            //cout << id << " Append " << " Head " << *head_ptr << " Tail " << *tail_ptr << " Buf " << buf[*tail_ptr] << endl;
+            //cout <<"Append " << " Head " << *head_ptr << " Tail " << *tail_ptr << " Buf " << buf[*tail_ptr] << endl;
             if(!buf[*tail_ptr]){
                 timer = 0;
                 add_item(buf,tail_ptr);
@@ -150,7 +150,7 @@ void consume(bool buf[],int *head_ptr,int *tail_ptr){
     while(1){
         m.lock();
         if(in_req > 0 || buf[*head_ptr]){
-            //cout << id << " Remove " << " Head " << *head_ptr << " Tail " << *tail_ptr << " Buf " << buf[*head_ptr] << endl;
+            //cout << "Remove " << " Head " << *head_ptr << " Tail " << *tail_ptr << " Buf " << buf[*head_ptr] << endl;
             if(buf[*head_ptr]){
                 remove_item(buf,head_ptr);
                 out_req++;
@@ -180,5 +180,5 @@ void consume2(bool buf[],int *head_ptr,int *tail_ptr){
 
 bool isTimeout(double time){
     double thisTime = clock();
-    return thisTime-time >=0.5;
+    return thisTime-time >= 1;
 }
